@@ -21,8 +21,6 @@ def compress_image_svd(image_path, compression_rate_percentage, output_dir="stat
                                                      (Didefinisikan sebagai 100 * (1 - (jumlah singular value / min(width, height))))
     """
     start_time = time.time()
-
-    # Memastikan direktori output ada
     os.makedirs(output_dir, exist_ok=True)
 
     try:
@@ -37,8 +35,6 @@ def compress_image_svd(image_path, compression_rate_percentage, output_dir="stat
 
     # Pastikan gambar adalah RGB (3 channel)
     if img_array.ndim == 2: # Grayscale
-        # Konversi ke RGB untuk konsistensi, atau langsung proses grayscale
-        # Untuk tujuan ini, kita akan mengubahnya menjadi 3 channel dengan menduplikasikan channel
         img_array = np.stack([img_array, img_array, img_array], axis=-1)
     elif img_array.ndim == 3 and img_array.shape[2] == 4: # RGBA
         # Konversi RGBA ke RGB (buang channel alpha)
@@ -55,21 +51,11 @@ def compress_image_svd(image_path, compression_rate_percentage, output_dir="stat
 
     height, width, channels = img_array.shape
     
-    # Menghitung jumlah singular value (k) berdasarkan tingkat kompresi
-    # compression_rate_percentage 100% berarti tidak ada kompresi (k = min(height, width))
-    # compression_rate_percentage 1% berarti kompresi maksimal (k = 1 atau nilai kecil lainnya)
-    # Kita akan membalik logikanya: 100 - compression_rate_percentage
-    # Semakin kecil compression_rate_percentage, semakin sedikit singular value yang diambil (lebih terkompresi)
-    # Semakin besar compression_rate_percentage, semakin banyak singular value yang diambil (kurang terkompresi)
-
-    # Calculate k based on the "quality" or "detail" the user wants to retain.
-    # A higher compression_rate_percentage means more detail is kept, thus more singular values.
-    # If the user enters 60%, it means we keep 60% of the maximum possible singular values.
     
     max_k = min(height, width)
     k = int(max_k * (compression_rate_percentage / 100.0))
     
-    # Ensure k is at least 1 and not more than max_k
+
     k = max(1, k)
     k = min(max_k, k)
 
@@ -101,26 +87,12 @@ def compress_image_svd(image_path, compression_rate_percentage, output_dir="stat
     end_time = time.time()
     runtime_ms = (end_time - start_time) * 1000
 
-    # Menghitung persentase perbedaan piksel (aproksimasi berdasarkan k)
-    # Ini adalah representasi sederhana dari "perubahan jumlah pixel image"
-    # Semakin kecil k, semakin besar "perbedaan" dari aslinya dalam konteks data
-    # Kualitas image bisa diukur dengan PSNR atau SSIM, tapi untuk proyek ini,
-    # kita bisa menggunakan metrik sederhana berdasarkan reduksi dimensi
-    
-    # Perbedaan pixel berdasarkan berapa banyak dimensi yang dikurangi
-    # Jika k = max_k, perbedaan = 0%
-    # Jika k = 1, perbedaan = 100% (atau mendekati)
     pixel_difference_percentage = 100.0 * (1.0 - (k / max_k))
     
     return compressed_image_path, runtime_ms, pixel_difference_percentage
 
 if __name__ == '__main__':
-    # Contoh penggunaan (bisa dihapus saat integrasi dengan Flask)
-    # Pastikan ada gambar 'test_image.jpg' di root folder atau sesuaikan path
-    # img_path = "test_image.jpg" 
-    # Pastikan Anda memiliki gambar untuk diuji, contoh: membuat dummy image
-    
-    # Membuat dummy image untuk pengujian
+
     dummy_img_array = np.random.randint(0, 256, size=(100, 150, 3), dtype=np.uint8)
     dummy_img = Image.fromarray(dummy_img_array)
     dummy_img_path = "static/uploads/original/dummy_test_image.png"
